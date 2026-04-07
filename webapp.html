@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ecuador Adventure Quiz</title>
+  <style>
+    /* ── Web App Styles (all in one file per rubric) ── */
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;1,300;1,700&family=Outfit:wght@300;400;600&display=swap');
+
+    :root {
+      --forest:      #1e3a1a;
+      --forest-mid:  #2d5016;
+      --green:       #4a7c2f;
+      --gold:        #c9a02a;
+      --terracotta:  #b85c38;
+      --cream:       #fdf9f0;
+      --sand:        #e8d5a3;
+      --text:        #1e2a14;
+      --muted:       #6b7a5c;
+      --correct:     #2d7a3a;
+      --wrong:       #a82828;
+      --correct-bg:  #e8f5e9;
+      --wrong-bg:    #fde8e8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--forest);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+      background-image:
+        radial-gradient(ellipse at 0% 0%, rgba(74,124,47,0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 100%, rgba(184,92,56,0.2) 0%, transparent 50%);
+    }
+
+    /* ── Back link ── */
+    .back-link {
+      align-self: flex-start;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: rgba(255,255,255,0.85); }
+
+    /* ── Card container ── */
+    .quiz-card {
+      background: var(--cream);
+      border-radius: 12px;
+      max-width: 640px;
+      width: 100%;
+      padding: 2.5rem 3rem;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quiz-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--forest-mid), var(--gold), var(--terracotta));
+    }
+
+    /* ── Header ── */
+    .quiz-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .quiz-eyebrow {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.5rem;
+    }
+
+    .quiz-title {
+      font-family: 'Fraunces', serif;
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--forest);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .quiz-subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      margin-bottom: 1.75rem;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    .progress-bar-track {
+      height: 5px;
+      background: #ddd;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--forest-mid), var(--gold));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Question ── */
+    .question-text {
+      font-family: 'Fraunces', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.45;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Options ── */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+
+    @media (max-width: 480px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .quiz-card { padding: 2rem 1.5rem; }
+      .quiz-title { font-size: 1.75rem; }
+    }
+
+    .option-btn {
+      background: #fff;
+      border: 2px solid #e0d9cc;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.18s;
+      line-height: 1.4;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--forest-mid);
+      background: #f5f2ec;
+      transform: translateY(-1px);
+    }
+
+    .option-btn.correct {
+      background: var(--correct-bg);
+      border-color: var(--correct);
+      color: var(--correct);
+      font-weight: 600;
+    }
+
+    .option-btn.wrong {
+      background: var(--wrong-bg);
+      border-color: var(--wrong);
+      color: var(--wrong);
+    }
+
+    .option-btn:disabled { cursor: default; }
+
+    /* ── Feedback ── */
+    .feedback-box {
+      background: #f9f6ee;
+      border-left: 4px solid var(--gold);
+      border-radius: 0 6px 6px 0;
+      padding: 0.85rem 1rem;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    .feedback-box.show { display: block; }
+
+    /* ── Next button ── */
+    .next-btn {
+      display: none;
+      width: 100%;
+      background: var(--forest-mid);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.85rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .next-btn.show { display: block; }
+    .next-btn:hover { background: var(--green); }
+
+    /* ── Results screen ── */
+    .results-screen { text-align: center; }
+
+    .results-emoji {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .results-score {
+      font-family: 'Fraunces', serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--forest);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+
+    .results-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .results-verdict {
+      font-family: 'Fraunces', serif;
+      font-size: 1.4rem;
+      font-style: italic;
+      color: var(--forest);
+      margin-bottom: 0.75rem;
+    }
+
+    .results-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .restart-btn {
+      background: var(--forest-mid);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.85rem 2.5rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-right: 0.5rem;
+    }
+
+    .restart-btn:hover { background: var(--green); }
+
+    .home-btn {
+      background: transparent;
+      color: var(--forest-mid);
+      border: 2px solid var(--forest-mid);
+      border-radius: 8px;
+      padding: 0.85rem 2.5rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .home-btn:hover {
+      background: var(--forest-mid);
+      color: #fff;
+    }
+
+    /* ── Intro screen ── */
+    .intro-screen { text-align: center; }
+
+    .intro-badges {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+    }
+
+    .badge-pill {
+      background: var(--sand);
+      color: var(--forest);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.85rem;
+      border-radius: 99px;
+    }
+
+    .start-btn {
+      background: var(--forest-mid);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.9rem 3rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .start-btn:hover { background: var(--green); }
+
+    .score-tally {
+      display: flex;
+      justify-content: space-between;
+      background: #f0ece0;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-tally .correct-count { color: var(--correct); }
+    .score-tally .wrong-count { color: var(--wrong); }
+  </style>
+</head>
+<body>
+
+  <a href="ecuador.html" class="back-link">← Back to Ecuador Stories</a>
+
+  <div class="quiz-card" id="quiz-app">
+    <!-- JS renders all screens here -->
+  </div>
+
+  <script>
+    // ════════════════════════════════════════
+    //  ECUADOR ADVENTURE QUIZ
+    //  Web app created with AI assistance
+    // ════════════════════════════════════════
+
+    const questions = [
+      {
+        q: "What does the name 'Ecuador' literally mean in Spanish?",
+        options: ["Land of the Sun", "The Equator", "Land of Rivers", "South Country"],
+        answer: 1,
+        fact: "Ecuador sits directly on the equator (Ecuador = equator in Spanish), making it one of only a handful of countries named after a geographical feature."
+      },
+      {
+        q: "Which iconic island chain belonging to Ecuador inspired Charles Darwin's theory of evolution?",
+        options: ["The Falkland Islands", "Easter Island", "The Galápagos Islands", "The Canary Islands"],
+        answer: 2,
+        fact: "Darwin visited the Galápagos in 1835. The unique wildlife on each island — particularly the finches and tortoises — gave him key evidence for natural selection."
+      },
+      {
+        q: "What is the currency of Ecuador?",
+        options: ["The Sucre", "The Sol", "The Peso", "The U.S. Dollar"],
+        answer: 3,
+        fact: "Ecuador dollarized its economy in 2000 after a severe financial crisis wiped out the value of the Sucre. It's one of the few countries that uses the U.S. dollar without issuing its own currency."
+      },
+      {
+        q: "Quito is one of the highest capital cities in the world. Approximately how high above sea level is it?",
+        options: ["2,000 feet", "5,500 feet", "9,350 feet", "14,000 feet"],
+        answer: 2,
+        fact: "Quito sits at 9,350 feet (2,850 meters) above sea level in the Andes mountains. The altitude can cause altitude sickness in visitors — shortness of breath, headaches, and fatigue."
+      },
+      {
+        q: "Which of these foods is a traditional Ecuadorian dish made from green plantains?",
+        options: ["Ceviche", "Bolón de Verde", "Lomo Saltado", "Arepas"],
+        answer: 1,
+        fact: "Bolón de verde is a staple of coastal Ecuador — a ball of mashed green plantain stuffed with cheese or meat, typically eaten for breakfast. It's especially common in cities like Atacames and Guayaquil."
+      },
+      {
+        q: "What is Ecuador's most famous active volcano — one of the highest in the world?",
+        options: ["Chimborazo", "Cotopaxi", "Pichincha", "Tungurahua"],
+        answer: 1,
+        fact: "Cotopaxi is one of the world's highest active volcanoes at 19,347 feet. It last erupted significantly in 2015. Chimborazo, while taller, is inactive and actually the farthest point from Earth's center due to the equatorial bulge."
+      },
+      {
+        q: "Ecuador is one of the world's top exporters of which flower?",
+        options: ["Tulips", "Orchids", "Roses", "Sunflowers"],
+        answer: 2,
+        fact: "Ecuador is the #1 or #2 exporter of roses in the world (competing with Colombia). The altitude, proximity to the equator, and climate in the Andes create ideal growing conditions for extraordinarily large, long-stemmed roses."
+      },
+      {
+        q: "Which country borders Ecuador to the north?",
+        options: ["Peru", "Brazil", "Colombia", "Venezuela"],
+        answer: 2,
+        fact: "Ecuador is bordered by Colombia to the north and Peru to the south and east, with the Pacific Ocean to the west. Despite its small size, it has remarkable geographic diversity — coast, Andes, Amazon, and Galápagos."
+      },
+      {
+        q: "What unique feature does Ecuador's Yasuní National Park hold?",
+        options: [
+          "The world's largest salt flat",
+          "One of the most biodiverse places on Earth",
+          "The world's tallest waterfall",
+          "The deepest lake in South America"
+        ],
+        answer: 1,
+        fact: "Yasuní National Park in the Amazon basin is considered one of the most biodiverse places on the planet — with more tree species per hectare than all of North America combined. It also sits above significant oil reserves, creating ongoing conservation debates."
+      },
+      {
+        q: "The 'Swing at the End of the World' is a famous tourist attraction located near which Ecuadorian city?",
+        options: ["Quito", "Guayaquil", "Baños", "Cuenca"],
+        answer: 2,
+        fact: "Casa del Árbol near Baños has a treehouse and a swing that extends over a cliff with sweeping views of the Tungurahua volcano. It's one of Ecuador's most photographed spots — despite (or because of) the terrifying drop below."
+      }
+    ];
+
+    // ── State ──
+    let state = {
+      screen: 'intro',  // 'intro' | 'quiz' | 'results'
+      current: 0,
+      score: 0,
+      answered: false,
+      selected: null,
+      wrong: 0
+    };
+
+    // ── Render ──
+    function render() {
+      const app = document.getElementById('quiz-app');
+      if (state.screen === 'intro') {
+        app.innerHTML = renderIntro();
+      } else if (state.screen === 'quiz') {
+        app.innerHTML = renderQuiz();
+      } else {
+        app.innerHTML = renderResults();
+      }
+      attachHandlers();
+    }
+
+    function renderIntro() {
+      return `
+        <div class="intro-screen">
+          <div class="quiz-header">
+            <p class="quiz-eyebrow">Interactive Web App</p>
+            <h1 class="quiz-title">Ecuador Adventure Quiz</h1>
+            <p class="quiz-subtitle">
+              10 questions about the geography, culture, food, and history of Ecuador.
+              How well do you know this extraordinary country?
+            </p>
+          </div>
+          <div class="intro-badges">
+            <span class="badge-pill">🌿 Geography</span>
+            <span class="badge-pill">🍽️ Food & Culture</span>
+            <span class="badge-pill">🏔️ Nature</span>
+            <span class="badge-pill">📜 History</span>
+            <span class="badge-pill">10 Questions</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:2rem; line-height:1.7;">
+            Built by someone who spent two years living in Ecuador — from the coast to the Amazon.
+            Some of these answers surprised even me when I learned them.
+          </p>
+          <button class="start-btn" id="start-btn">Start the Quiz →</button>
+        </div>
+      `;
+    }
+
+    function renderQuiz() {
+      const q = questions[state.current];
+      const progress = ((state.current) / questions.length) * 100;
+
+      let optionsHTML = q.options.map((opt, i) => {
+        let cls = 'option-btn';
+        let disabled = '';
+        if (state.answered) {
+          disabled = 'disabled';
+          if (i === q.answer) cls += ' correct';
+          else if (i === state.selected) cls += ' wrong';
+        }
+        return `<button class="${cls}" data-idx="${i}" ${disabled}>${opt}</button>`;
+      }).join('');
+
+      return `
+        <div class="progress-wrap">
+          <div class="progress-header">
+            <span>Question ${state.current + 1} of ${questions.length}</span>
+            <span class="correct-count">✓ ${state.score}</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width:${progress}%"></div>
+          </div>
+        </div>
+
+        <div class="score-tally">
+          <span>🗺️ Ecuador Quiz</span>
+          <span>
+            <span class="correct-count">${state.score} correct</span>
+            &nbsp;·&nbsp;
+            <span class="wrong-count">${state.wrong} wrong</span>
+          </span>
+        </div>
+
+        <p class="question-text">${q.q}</p>
+
+        <div class="options-grid" id="options-grid">
+          ${optionsHTML}
+        </div>
+
+        <div class="feedback-box ${state.answered ? 'show' : ''}" id="feedback-box">
+          📖 <strong>Did you know?</strong> ${q.fact}
+        </div>
+
+        <button class="next-btn ${state.answered ? 'show' : ''}" id="next-btn">
+          ${state.current + 1 < questions.length ? 'Next Question →' : 'See My Results →'}
+        </button>
+      `;
+    }
+
+    function renderResults() {
+      const pct = Math.round((state.score / questions.length) * 100);
+
+      let emoji, verdict, note;
+      if (state.score === 10) {
+        emoji = '🏆'; verdict = 'You\'ve been to Ecuador'; note = 'A perfect score. You either lived there, or you\'re incredibly well-read. Either way — impressive.';
+      } else if (state.score >= 8) {
+        emoji = '🌿'; verdict = 'Ecuador Expert'; note = 'You know this country well. A few more questions and you\'d be giving tours.';
+      } else if (state.score >= 6) {
+        emoji = '🗺️'; verdict = 'Well-Traveled Thinker'; note = 'Solid knowledge. You\'ve clearly paid attention to the world beyond your own backyard.';
+      } else if (state.score >= 4) {
+        emoji = '🌎'; verdict = 'Getting There'; note = 'Not bad for a first attempt. Ecuador has a lot more to teach you — starting with a visit.';
+      } else {
+        emoji = '✈️'; verdict = 'Time to Book a Flight'; note = 'Ecuador is calling. The good news: two years there teaches you everything you missed here.';
+      }
+
+      return `
+        <div class="results-screen">
+          <span class="results-emoji">${emoji}</span>
+          <div class="results-score">${state.score}<span style="font-size:2rem; color:var(--muted);">/${questions.length}</span></div>
+          <div class="results-label">${pct}% correct</div>
+          <div class="results-verdict">${verdict}</div>
+          <p class="results-note">${note}</p>
+          <div>
+            <button class="restart-btn" id="restart-btn">Try Again</button>
+            <a href="ecuador.html" class="home-btn">Read My Stories</a>
+          </div>
+        </div>
+      `;
+    }
+
+    // ── Event Handlers ──
+    function attachHandlers() {
+      const startBtn = document.getElementById('start-btn');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          state.screen = 'quiz';
+          render();
+        });
+      }
+
+      const optionBtns = document.querySelectorAll('.option-btn');
+      optionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (state.answered) return;
+          const idx = parseInt(btn.dataset.idx);
+          state.selected = idx;
+          state.answered = true;
+          if (idx === questions[state.current].answer) {
+            state.score++;
+          } else {
+            state.wrong++;
+          }
+          render();
+          // Smooth scroll to feedback on mobile
+          setTimeout(() => {
+            const fb = document.getElementById('feedback-box');
+            if (fb) fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
+        });
+      });
+
+      const nextBtn = document.getElementById('next-btn');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          state.current++;
+          state.answered = false;
+          state.selected = null;
+          if (state.current >= questions.length) {
+            state.screen = 'results';
+          }
+          render();
+          // Scroll to top of card
+          document.querySelector('.quiz-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+
+      const restartBtn = document.getElementById('restart-btn');
+      if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+          state = { screen: 'quiz', current: 0, score: 0, answered: false, selected: null, wrong: 0 };
+          render();
+        });
+      }
+    }
+
+    // ── Init ──
+    render();
+  </script>
+
+</body>
+</html>
